@@ -1,0 +1,130 @@
+<script>
+let sliderCount = 0;
+
+// Defined each slider instance. 
+document.querySelectorAll('[fr-swiper-instance]').forEach((element, index) => {
+  element.classList.add(`fr-swiper-instance-${index}`);
+  sliderCount++;
+});
+
+let swiperInstances = document.querySelectorAll('[fr-swiper-instance]');
+
+// Function to convert data attributes to Swiper settings
+function parseDataAttributes(element) {
+  const settings = {};
+  Array.from(element.attributes).forEach(attr => {
+    if (attr.name.startsWith('fr-swiper-set-')) {
+      const keys = attr.name.replace('fr-swiper-set-', '').split('-');
+      let current = settings;
+      keys.forEach((key, index) => {
+        if (index === keys.length - 1) {
+          current[key] = attr.value === 'true' ? true : attr.value === 'false' ? false : isNaN(attr.value) ? attr.value : Number(attr.value);
+        } else {
+          current[key] = current[key] || {};
+          current = current[key];
+        }
+      });
+    }
+  });
+  return settings;
+}
+
+// Loop through all swiperInstances to initialize them
+swiperInstances.forEach((instance, index) => {
+    // Get the main element of the instance
+    const mainElement = instance;
+
+    // Get the first class name of the main element
+    const firstClassName = mainElement.classList[0];
+
+    // Generate the new class name
+    const newClassName = `${firstClassName}_list-wrapper`;
+
+    // Search inside the instance for the element with the new class name
+    const targetElement = mainElement.querySelector(`.${newClassName}`);
+    
+    if (targetElement) {
+        // Add the new class with the index
+        targetElement.classList.add(`fr-swiper-list-wrapper-${index}`);
+    }
+    
+    // Defined slider controls.
+    const nextElement = instance.querySelector("[fr-swiper-next]");
+    const prevElement = instance.querySelector("[fr-swiper-prev]");
+    
+    const pagination = instance.querySelector("[fr-swiper-pagination]");
+    
+    // Default settings
+    const defaultSettings = {
+        wrapperClass: `${firstClassName}_list`,
+        slideClass: `${firstClassName}_slide`,
+        slidesPerView: 'auto',
+        followFinger: true,
+        spaceBetween: 0,
+        mousewheel: {
+            forceToAxis: true
+        },
+        keyboard: {
+            enabled: true,
+            onlyInViewport: true
+        },
+        navigation: {
+            nextEl: nextElement,
+            prevEl: prevElement,
+            disabledClass: "is--disabled"
+        },
+        pagination: {
+            el: pagination,
+            bulletActiveClass: "is--active",
+            bulletClass: "slider_bullet",
+            bulletElement: "button",
+            clickable: true
+        }
+    };
+    
+    // Extract settings from data attributes
+    const dataSettings = parseDataAttributes(mainElement);
+    
+    // Merge default settings with data settings
+    const swiperSettings = { ...defaultSettings, ...dataSettings };
+
+    // Create Swiper instance with dynamic variable name
+    const swiperInstance = new Swiper(`.fr-swiper-list-wrapper-${index}`, swiperSettings);
+    // Flag to track disabled state
+    swiperInstance._isDisabled = false;
+    window[`swiperInstance${index}`] = swiperInstance;
+});
+
+// Function to update each swiper instance based on breakpoints
+function updateSwiperStates() {
+  swiperInstances.forEach((instance, index) => {
+    const swiperInstance = window[`swiperInstance${index}`];
+    // Get breakpoint values from custom attributes
+    const disableBreakpointAttr = instance.getAttribute('fr-swiper-trigger-disable()');
+    const enableBreakpointAttr = instance.getAttribute('fr-swiper-trigger-enable()');
+    const disableBreakpoint = disableBreakpointAttr ? Number(disableBreakpointAttr) : null;
+    const enableBreakpoint = enableBreakpointAttr ? Number(enableBreakpointAttr) : null;
+    const viewportWidth = window.innerWidth;
+
+    // If a disable breakpoint is defined and the viewport is wider than or equal to it, disable the swiper.
+    if (disableBreakpoint !== null && viewportWidth >= disableBreakpoint) {
+      if (!swiperInstance._isDisabled) {
+        swiperInstance.disable();
+        swiperInstance._isDisabled = true;
+      }
+    }
+    // If an enable breakpoint is defined and the viewport is narrower than or equal to it, enable the swiper.
+    else if (enableBreakpoint !== null && viewportWidth <= enableBreakpoint) {
+      if (swiperInstance._isDisabled) {
+        swiperInstance.enable();
+        swiperInstance._isDisabled = false;
+      }
+    }
+    // Optionally, add an else block if you want to reset to a default state.
+  });
+}
+
+// Run on initial load and on window resize
+window.addEventListener('resize', updateSwiperStates);
+window.addEventListener('load', updateSwiperStates);
+</script>
