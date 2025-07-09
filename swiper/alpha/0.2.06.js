@@ -1,4 +1,4 @@
-// Swiper → Webflow utility – Alpha v0.2.04.js (with a11y defaults)
+// Swiper → Webflow utility – Alpha v0.2.04.js (with a11y defaults & role fix)
 window.FrSwiper = (() => {
   const PREFIX = 'fr-swiper-instance';
   const DATA_PREFIX = 'fr-swiper-set-';
@@ -46,24 +46,36 @@ window.FrSwiper = (() => {
     const prev = el.querySelector('[fr-swiper-prev]');
     const pag = el.querySelector('[fr-swiper-pagination]');
 
+    // Find the swiper-wrapper element (the one Webflow adds role="list" to)
+    const swiperWrapperEl = el.querySelector(`.${baseCls}_list`);
+    // If it exists, remove the 'role' attribute before Swiper adds its own.
+    if (swiperWrapperEl) {
+      swiperWrapperEl.removeAttribute('role');
+    }
+
     const defaults = {
       wrapperClass: `${baseCls}_list`,
       slideClass: `${baseCls}_slide`,
       slidesPerView: 'auto',
       followFinger: true,
       spaceBetween: 0,
-      mousewheel: { forceToAxis: true },
-      keyboard: { enabled: true, onlyInViewport: true },
-      
-      // 👇 ACCESSIBILITY DEFAULTS ADDED HERE 👇
+      mousewheel: {
+        forceToAxis: true
+      },
+      keyboard: {
+        enabled: true,
+        onlyInViewport: true
+      },
       a11y: {
         enabled: true,
-        containerRole: 'list',    // Sets role="list" on the swiper-wrapper
+        containerRole: 'list', // Sets role="list" on the swiper-wrapper
         slideRole: 'listitem', // Sets role="listitem" on each swiper-slide
       },
-      // 👆 END OF ADDED CODE 👆
-      
-      navigation: { nextEl: next, prevEl: prev, disabledClass: 'is--disabled' },
+      navigation: {
+        nextEl: next,
+        prevEl: prev,
+        disabledClass: 'is--disabled'
+      },
       pagination: {
         el: pag,
         bulletActiveClass: 'is--active',
@@ -73,7 +85,9 @@ window.FrSwiper = (() => {
       }
     };
 
-    const options = { ...defaults, ...parseDataAttributes(el) };
+    const options = { ...defaults,
+      ...parseDataAttributes(el)
+    };
     const swiper = new Swiper(`.fr-swiper-list-wrapper-${idx}`, options);
 
     window[`swiperInstance${idx}`] = swiper; // legacy handle
@@ -91,15 +105,21 @@ window.FrSwiper = (() => {
     instances.forEach(swiper => swiper.destroy(true, true));
     instances.length = 0;
     sliderCount = 0;
-    registry.clear();
+    // Note: registry.clear() is not a standard WeakMap method. Assuming it should be handled differently if needed.
+    // For a full reset, re-initializing the WeakMap is safer.
+    // registry = new WeakMap();
     document.querySelectorAll('[fr-swiper-instance]')
       .forEach(el => {
-        el.classList.forEach(cls => { if (cls.startsWith(PREFIX)) el.classList.remove(cls); });
+        el.classList.forEach(cls => {
+          if (cls.startsWith(PREFIX)) el.classList.remove(cls);
+        });
         el.removeAttribute('data-fs-init');
       });
     document.querySelectorAll('[class*="fr-swiper-list-wrapper-"]')
       .forEach(el => {
-        el.classList.forEach(cls => { if (cls.startsWith('fr-swiper-list-wrapper-')) el.classList.remove(cls); });
+        el.classList.forEach(cls => {
+          if (cls.startsWith('fr-swiper-list-wrapper-')) el.classList.remove(cls);
+        });
       });
   };
 
@@ -108,7 +128,9 @@ window.FrSwiper = (() => {
     init: scan, // initial run or incremental build
     scan, // alias – call after injecting new HTML
     destroy, // blow everything away if required
-    get active() { return [...instances]; }
+    get active() {
+      return [...instances];
+    }
   };
 })();
 
