@@ -1,4 +1,4 @@
-// Swiper → Webflow utility – Alpha v0.2.04.js (with a11y defaults & role fix)
+// Swiper → Webflow utility – Alpha v0.2.04.js (with a11y defaults & CORRECTED role fix)
 window.FrSwiper = (() => {
   const PREFIX = 'fr-swiper-instance';
   const DATA_PREFIX = 'fr-swiper-set-';
@@ -40,18 +40,17 @@ window.FrSwiper = (() => {
     const wrapper = el.querySelector(`.${baseCls}_list-wrapper`);
     if (!wrapper) return;
 
+    // --- 👇 NEW CORRECTED CODE --- 👇 ---
+    // Remove the incorrect role="list" that Webflow adds to the outer wrapper.
+    // This allows Swiper to correctly place it on the inner wrapper.
+    wrapper.removeAttribute('role');
+    // --- 👆 END OF CORRECTED CODE --- 👆 ---
+
     wrapper.classList.add(`fr-swiper-list-wrapper-${idx}`);
 
     const next = el.querySelector('[fr-swiper-next]');
     const prev = el.querySelector('[fr-swiper-prev]');
     const pag = el.querySelector('[fr-swiper-pagination]');
-
-    // Find the swiper-wrapper element (the one Webflow adds role="list" to)
-    const swiperWrapperEl = el.querySelector(`.${baseCls}_list`);
-    // If it exists, remove the 'role' attribute before Swiper adds its own.
-    if (swiperWrapperEl) {
-      swiperWrapperEl.removeAttribute('role');
-    }
 
     const defaults = {
       wrapperClass: `${baseCls}_list`,
@@ -68,7 +67,7 @@ window.FrSwiper = (() => {
       },
       a11y: {
         enabled: true,
-        containerRole: 'list', // Sets role="list" on the swiper-wrapper
+        containerRole: 'list', // Correctly sets role="list" on the swiper-wrapper
         slideRole: 'listitem', // Sets role="listitem" on each swiper-slide
       },
       navigation: {
@@ -105,9 +104,6 @@ window.FrSwiper = (() => {
     instances.forEach(swiper => swiper.destroy(true, true));
     instances.length = 0;
     sliderCount = 0;
-    // Note: registry.clear() is not a standard WeakMap method. Assuming it should be handled differently if needed.
-    // For a full reset, re-initializing the WeakMap is safer.
-    // registry = new WeakMap();
     document.querySelectorAll('[fr-swiper-instance]')
       .forEach(el => {
         el.classList.forEach(cls => {
