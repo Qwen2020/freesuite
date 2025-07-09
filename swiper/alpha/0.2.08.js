@@ -1,4 +1,4 @@
-// Swiper → Webflow utility – Alpha v0.2.04.js (with a11y defaults & CORRECTED role fix)
+// Swiper → Webflow utility – Alpha v0.2.04.js (FINAL, ROBUST FIX)
 window.FrSwiper = (() => {
   const PREFIX = 'fr-swiper-instance';
   const DATA_PREFIX = 'fr-swiper-set-';
@@ -33,18 +33,21 @@ window.FrSwiper = (() => {
   const mount = el => {
     if (registry.has(el)) return; // already initialised
 
+    // --- FINAL, ROBUST FIX ---
+    // Find ALL elements with role="list" inside this slider instance and remove the attribute.
+    // This creates a clean slate before Swiper adds the one, correct role back.
+    const rogueLists = el.querySelectorAll('[role="list"]');
+    rogueLists.forEach(list => {
+      list.removeAttribute('role');
+    });
+    // --- END OF FIX ---
+
     const idx = sliderCount++;
     el.classList.add(`${PREFIX}-${idx}`);
 
     const baseCls = el.classList[0];
     const wrapper = el.querySelector(`.${baseCls}_list-wrapper`);
     if (!wrapper) return;
-
-    // --- 👇 NEW CORRECTED CODE --- 👇 ---
-    // Remove the incorrect role="list" that Webflow adds to the outer wrapper.
-    // This allows Swiper to correctly place it on the inner wrapper.
-    wrapper.removeAttribute('role');
-    // --- 👆 END OF CORRECTED CODE --- 👆 ---
 
     wrapper.classList.add(`fr-swiper-list-wrapper-${idx}`);
 
@@ -67,8 +70,8 @@ window.FrSwiper = (() => {
       },
       a11y: {
         enabled: true,
-        containerRole: 'list', // Correctly sets role="list" on the swiper-wrapper
-        slideRole: 'listitem', // Sets role="listitem" on each swiper-slide
+        containerRole: 'list', // This will now be the ONLY role="list"
+        slideRole: 'listitem',
       },
       navigation: {
         nextEl: next,
@@ -84,9 +87,7 @@ window.FrSwiper = (() => {
       }
     };
 
-    const options = { ...defaults,
-      ...parseDataAttributes(el)
-    };
+    const options = { ...defaults, ...parseDataAttributes(el) };
     const swiper = new Swiper(`.fr-swiper-list-wrapper-${idx}`, options);
 
     window[`swiperInstance${idx}`] = swiper; // legacy handle
